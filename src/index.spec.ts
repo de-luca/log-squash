@@ -67,7 +67,7 @@ describe('Squasher.length', () => {
 });
 
 describe('Squasher.prune', () => {
-    it('prunes dropable logs', () => {
+    it('prunes droppable logs', () => {
         const squasher = new Squasher({});
         squasher.info('foo');
         squasher.debug('bar');
@@ -117,10 +117,10 @@ describe('Squasher.squash', () => {
 
 describe('Squasher.output', () => {
     it('output the logs through logger', () => {
-        console.debug = jest.fn(() => {});
-        console.info = jest.fn(() => {});
-        console.warn = jest.fn(() => {});
-        console.error = jest.fn(() => {});
+        console.debug = jest.fn(() => {/* NOOP */});
+        console.info = jest.fn(() => {/* NOOP */});
+        console.warn = jest.fn(() => {/* NOOP */});
+        console.error = jest.fn(() => {/* NOOP */});
 
         const squasher = new Squasher({});
         squasher.debug('not even seen');
