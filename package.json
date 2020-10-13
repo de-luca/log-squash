@@ -1,5 +1,6 @@
 {
   "name": "log-squash",
+  "description": "A \"catcher-reducer-squasher\" for your logs.",
   "version": "0.1.0",
   "license": "MIT",
   "main": "lib/index.js",
