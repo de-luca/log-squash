@@ -16,6 +16,7 @@ export interface LogConfig {
     squashable?: boolean;
     pruneable?: boolean;
     squashIn?: string;
+    group?: string;
 }
 
 export enum Level {
@@ -105,13 +106,17 @@ export default class Squasher {
         this.log(msg, Level.ERROR, config, ...additional);
     }
 
-    public prune(): void {
-        this._logs = this._logs.filter((value) => {
-            if (value.config.pruneable) {
+    public prune(group?: string): void {
+        this._logs = this._logs.filter((log) => {
+            if (group && log.config.group !== group) {
+                return true;
+            }
+
+            if (log.config.pruneable) {
                 return false;
             }
 
-            if (value.level === Level.DEBUG && !this._debug) {
+            if (log.level === Level.DEBUG && !this._debug) {
                 return false;
             }
 
@@ -119,25 +124,31 @@ export default class Squasher {
         });
     }
 
-    public squash(): void {
+    public squash(group?: string): void {
+        let lastSquashed = 0;
         this._logs = this._logs.reduce(
             (acc: Array<Log>, log: Log): Array<Log> => {
-                const i = acc.length;
+                if (group && log.config.group !== group) {
+                    acc.push(log);
+                    return acc;
+                }
 
                 if (log.config.squashable) {
-                    if (i > 0 && acc[i - 1].config.squashable) {
-                        acc[i - 1] = {
+                    if (lastSquashed > 0) {
+                        acc[lastSquashed] = {
                             ...log,
-                            msg: acc[i - 1].msg + this._squashStr + (log.config.squashIn || log.msg),
+                            msg: acc[lastSquashed].msg + this._squashStr + (log.config.squashIn || log.msg),
                         }
                     } else {
                         acc.push({
                             ...log,
                             msg: log.config.squashIn || log.msg,
                         });
+                        lastSquashed = acc.length - 1;
                     }
                 } else {
                     acc.push(log);
+                    lastSquashed = 0;
                 }
 
                 return acc;
@@ -150,13 +161,22 @@ export default class Squasher {
         this._logs = this._logs.slice(start, end);
     }
 
-    public length(): number {
+    public length(group?: string): number {
+        if (group) {
+            return this._logs
+                .filter(log => log.config.group === group)
+                .length;
+        }
+
         return this._logs.length;
     }
 
-    public output(): void {
+    public output(group?: string): void {
         for (const log of this._logs) {
-            if (log.level === Level.DEBUG && !this._debug) {
+            if (
+                   (group && log.config.group !== group)
+                || (log.level === Level.DEBUG && !this._debug)
+            ) {
                 continue;
             } else {
                 this._logger[log.level](log.msg, ...log.additional);
